@@ -12,6 +12,8 @@ struct TerminalSettingsView: View {
     private var confirmRunningProcess = true
     @AppStorage(SessionRestorePreferences.enabledKey)
     private var restoreSessionsEnabled = SessionRestorePreferences.defaultIsEnabled
+    @AppStorage(GeneralSettingsKeys.lowMemoryMode)
+    private var lowMemoryMode = false
     @State private var excludedCommands = SessionRestorePreferences.excludedCommandsText
 
     var body: some View {
@@ -47,6 +49,22 @@ struct TerminalSettingsView: View {
                 SettingsToggleRow(
                     label: "Confirm before closing a tab with a running process",
                     isOn: $confirmRunningProcess
+                )
+            }
+
+            let footer = """
+            Reduces RAM by evicting hidden terminal surfaces. \
+            Requires tmux.
+
+            • Shell state persists across workspace switches
+            • Smooth scrolling replaced with tmux-style scroll
+            • Text selection handled by tmux instead of native Ghostty
+            • Existing terminals require reopening to apply
+            """
+            SettingsSection("Performance", footer: footer) {
+                SettingsToggleRow(
+                    label: "Low Memory Mode",
+                    isOn: $lowMemoryMode
                 )
             }
 
