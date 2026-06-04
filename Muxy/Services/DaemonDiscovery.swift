@@ -4,7 +4,7 @@ import os
 
 private let logger = Logger(subsystem: "app.muxy", category: "DaemonDiscovery")
 
-struct DiscoveredDaemon: Equatable, Sendable {
+struct DiscoveredDaemon: Equatable {
     let name: String
     let host: String
     let port: UInt16
