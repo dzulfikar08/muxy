@@ -65,18 +65,10 @@ public struct DaemonFrame: Sendable {
         return data
     }
 
-    private static func readPayloadLength(from data: Data) -> UInt32 {
-        var bytes: [UInt8] = [0, 0, 0, 0]
-        bytes.withUnsafeMutableBufferPointer { dst in
-            data.copyBytes(to: dst, from: 0 ..< 4)
+    private static func readPayloadLength(from data: Data, offset: Int = 0) -> UInt32 {
+        data[offset...].withUnsafeBytes { ptr in
+            ptr.loadUnaligned(as: UInt32.self).bigEndian
         }
-        var length: UInt32 = 0
-        withUnsafeMutablePointer(to: &length) { ptr in
-            ptr.withMemoryRebound(to: UInt8.self, capacity: 4) { bytePtr in
-                bytePtr.assign(from: bytes, count: 4)
-            }
-        }
-        return length.bigEndian
     }
 
     public static func decode(from data: Data) throws -> DaemonFrame {
@@ -94,8 +86,7 @@ public struct DaemonFrame: Sendable {
             throw DaemonFrameError.unknownMessageType(typeRaw)
         }
 
-        let lengthBytes = Data(data[2 ..< 6])
-        let payloadLength = readPayloadLength(from: lengthBytes)
+        let payloadLength = readPayloadLength(from: data, offset: 2)
         let payloadEnd = headerSize + Int(payloadLength)
 
         guard data.count >= payloadEnd else {
@@ -111,21 +102,20 @@ public struct DaemonFrame: Sendable {
     public static func decodeStreaming(from buffer: inout Data) -> DaemonFrame? {
         guard buffer.count >= headerSize else { return nil }
 
-        let lengthBytes = Data(buffer[2 ..< 6])
-        let payloadLength = readPayloadLength(from: lengthBytes)
+        let payloadLength = readPayloadLength(from: buffer, offset: 2)
         let totalSize = headerSize + Int(payloadLength)
 
         guard buffer.count >= totalSize else { return nil }
 
         let version = buffer[0]
-        let typeRaw = buffer[1]
-        let payload = Data(buffer[headerSize ..< totalSize])
-
-        buffer.removeSubrange(0 ..< totalSize)
-
         guard version == protocolVersion else { return nil }
+
+        let typeRaw = buffer[1]
         guard let messageType = DaemonMessageType(rawValue: typeRaw) else { return nil }
 
-        return DaemonFrame(type: messageType, payload: payload)
+        let frameData = buffer[0 ..< totalSize]
+        buffer.removeSubrange(0 ..< totalSize)
+
+        return DaemonFrame(type: messageType, payload: Data(frameData[headerSize ..< totalSize]))
     }
 }
