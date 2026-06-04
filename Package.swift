@@ -83,6 +83,11 @@ let package = Package(
             dependencies: ["MuxyDaemon"],
             path: "MuxyDaemonExec"
         ),
+        .executableTarget(
+            name: "MuxyRelay",
+            dependencies: ["MuxyShared"],
+            path: "MuxyRelay"
+        ),
         .testTarget(
             name: "MuxyDaemonTests",
             dependencies: ["MuxyDaemon", "MuxyShared"],
