@@ -10,8 +10,15 @@ public struct SessionInfo: Codable, Sendable, Equatable {
     let createdAt: Date
 }
 
-public enum DaemonMessageDecodeError: Error, Sendable, Equatable {
+public enum DaemonMessageDecodeError: Error, LocalizedError, Sendable, Equatable {
     case typeMismatch(expected: String, got: DaemonMessageType)
+
+    public var errorDescription: String? {
+        switch self {
+        case let .typeMismatch(expected, got):
+            "Expected \(expected) message type, got \(got)"
+        }
+    }
 }
 
 public enum DaemonClientMessage: Equatable, Sendable {
