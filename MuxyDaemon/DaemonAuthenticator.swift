@@ -1,6 +1,6 @@
 import Foundation
 
-enum AuthResult: Sendable, Equatable {
+enum AuthResult: Equatable {
     case approved
     case denied
     case banned

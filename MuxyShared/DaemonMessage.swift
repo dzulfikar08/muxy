@@ -1,13 +1,23 @@
 import Foundation
 
 public struct SessionInfo: Codable, Sendable, Equatable {
-    let id: UUID
-    let shell: String
-    let cwd: String
-    let cols: UInt16
-    let rows: UInt16
-    let attachedClients: Int
-    let createdAt: Date
+    public let id: UUID
+    public let shell: String
+    public let cwd: String
+    public let cols: UInt16
+    public let rows: UInt16
+    public let attachedClients: Int
+    public let createdAt: Date
+
+    public init(id: UUID, shell: String, cwd: String, cols: UInt16, rows: UInt16, attachedClients: Int, createdAt: Date) {
+        self.id = id
+        self.shell = shell
+        self.cwd = cwd
+        self.cols = cols
+        self.rows = rows
+        self.attachedClients = attachedClients
+        self.createdAt = createdAt
+    }
 }
 
 public enum DaemonMessageDecodeError: Error, LocalizedError, Sendable, Equatable {
@@ -32,7 +42,7 @@ public enum DaemonClientMessage: Equatable, Sendable {
     case killSession(sessionID: UUID)
     case ping
 
-    var messageType: DaemonMessageType {
+    public var messageType: DaemonMessageType {
         switch self {
         case .authRequest: .authRequest
         case .listSessions: .listSessions
@@ -46,7 +56,7 @@ public enum DaemonClientMessage: Equatable, Sendable {
         }
     }
 
-    func encode() throws -> Data {
+    public func encode() throws -> Data {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = .sortedKeys
@@ -89,7 +99,7 @@ public enum DaemonServerMessage: Equatable, Sendable {
     case pong
     case resizeRequired(cols: UInt16, rows: UInt16)
 
-    var messageType: DaemonMessageType {
+    public var messageType: DaemonMessageType {
         switch self {
         case .authResponse: .authResponse
         case .sessionList: .sessionList
@@ -105,7 +115,7 @@ public enum DaemonServerMessage: Equatable, Sendable {
         }
     }
 
-    func encode() throws -> Data {
+    public func encode() throws -> Data {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = .sortedKeys
@@ -140,13 +150,14 @@ public enum DaemonServerMessage: Equatable, Sendable {
 }
 
 public final class DaemonMessageDecoder: Sendable {
+    public init() {}
     private let decoder: JSONDecoder = {
         let d = JSONDecoder()
         d.dateDecodingStrategy = .iso8601
         return d
     }()
 
-    func decodeClientMessage(type: DaemonMessageType, data: Data) throws -> DaemonClientMessage {
+    public func decodeClientMessage(type: DaemonMessageType, data: Data) throws -> DaemonClientMessage {
         switch type {
         case .authRequest:
             let payload = try decoder.decode(AuthRequestPayload.self, from: data)
@@ -184,7 +195,7 @@ public final class DaemonMessageDecoder: Sendable {
         }
     }
 
-    func decodeServerMessage(type: DaemonMessageType, data: Data) throws -> DaemonServerMessage {
+    public func decodeServerMessage(type: DaemonMessageType, data: Data) throws -> DaemonServerMessage {
         switch type {
         case .authResponse:
             let payload = try decoder.decode(AuthResponsePayload.self, from: data)

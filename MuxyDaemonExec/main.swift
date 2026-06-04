@@ -36,8 +36,17 @@ do {
     Foundation.exit(1)
 }
 
+let server = DaemonServer(config: config)
+do {
+    try server.start()
+} catch {
+    logger.error("Failed to start daemon server: \(error)")
+    Foundation.exit(1)
+}
+
 Task {
     await waitForShutdownSignal()
+    server.stop()
     logger.info("muxyd stopped")
     Foundation.exit(0)
 }
