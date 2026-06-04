@@ -23,7 +23,6 @@ final class RemoteServerDelegate: MuxyRemoteServerDelegate {
         self.projectStore = projectStore
         self.worktreeStore = worktreeStore
         PaneOwnershipStore.shared.onOwnershipChanged = { [weak self] paneID, owner in
-            TerminalViewRegistry.shared.existingView(for: paneID)?.remoteOwnershipDidChange()
             self?.broadcastOwnership(paneID: paneID, owner: owner)
         }
         NotificationCenter.default.addObserver(
