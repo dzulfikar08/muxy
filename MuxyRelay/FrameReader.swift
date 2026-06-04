@@ -1,6 +1,6 @@
 import Foundation
-import Network
 import MuxyShared
+import Network
 import os
 
 final class FrameReader: @unchecked Sendable {

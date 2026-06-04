@@ -1,6 +1,6 @@
 import Foundation
-import Network
 import MuxyShared
+import Network
 import os
 
 private let logger = Logger(subsystem: "app.muxy", category: "RelayConnection")
@@ -97,7 +97,8 @@ final class RelayConnection: @unchecked Sendable {
         switch frame.type {
         case .ptyOutput:
             if let message = try? messageDecoder.decodeServerMessage(type: .ptyOutput, data: frame.payload),
-               case let .ptyOutput(_, bytes) = message {
+               case let .ptyOutput(_, bytes) = message
+            {
                 return bytes
             }
         case .sessionExited:
