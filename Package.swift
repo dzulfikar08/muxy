@@ -73,6 +73,16 @@ let package = Package(
                 .linkedLibrary("c++"),
             ]
         ),
+        .executableTarget(
+            name: "MuxyDaemon",
+            dependencies: ["MuxyShared"],
+            path: "MuxyDaemon"
+        ),
+        .testTarget(
+            name: "MuxyDaemonTests",
+            dependencies: ["MuxyShared"],
+            path: "Tests/MuxyDaemonTests"
+        ),
         .testTarget(
             name: "MuxyTests",
             dependencies: [
