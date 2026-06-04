@@ -4,12 +4,12 @@ import Testing
 
 @Suite("PTYSession")
 struct PTYSessionTests {
-    @Test("create session outputs shell prompt")
-    func testCreateSessionOutputsShellPrompt() throws {
+    @Test("create session and read output via cat")
+    func testCreateSessionOutputsData() throws {
         let session = try PTYSession(
             id: UUID(),
-            shell: "/bin/echo",
-            args: ["hello from pty"],
+            shell: "/bin/cat",
+            args: [],
             cwd: "/tmp",
             env: [:],
             cols: 80,
@@ -17,6 +17,8 @@ struct PTYSessionTests {
         )
 
         defer { session.kill() }
+
+        try session.write(Data("hello from pty\n".utf8))
 
         var output = Data()
         let deadline = Date().addingTimeInterval(2.0)
