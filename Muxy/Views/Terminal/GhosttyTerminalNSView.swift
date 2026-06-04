@@ -129,29 +129,20 @@ final class GhosttyTerminalNSView: NSView {
         surfaceCStringPointers.append(workingDirectoryPointer)
         config.working_directory = UnsafePointer(workingDirectoryPointer)
 
-        if Self.surfaceEvictionEnabled(), let tmux = Self.findTmuxBinary(), let sessionName = tmuxSessionName() {
-            let configPath = Self.ensureTmuxConfig()
-            let quotedConfig = "'\(configPath)'"
-            let quotedDir = "'\(workingDirectory)'"
-            let tmuxCommand: String
-            if let command,
-               let loginWrapped = strdup(TerminalLaunchCommand.shellCommand(
-                   interactive: commandInteractive,
-                   keepsShellOpen: !commandClosesOnExit
-               )),
-               let commandKey = strdup(TerminalLaunchCommand.environmentKey),
-               let commandValue = strdup(command)
-            {
-                surfaceCStringPointers.append(contentsOf: [loginWrapped, commandKey, commandValue])
-                cEnvVars.append(ghostty_env_var_s(key: commandKey, value: commandValue))
-                let loginCmd = String(cString: loginWrapped)
-                tmuxCommand = "\(tmux) -L \(Self.tmuxSocketName) -f \(quotedConfig)" +
-                    " new-session -A -s \(sessionName) -x 200 -y 50 \(loginCmd)"
+        if let relay = Self.findRelayBinary() {
+            let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+            let relayCommand: String
+            if let command {
+                relayCommand = "\(relay) new --cwd \(ShellEscaper.escape(workingDirectory))" +
+                    " --env \(TerminalLaunchCommand.environmentKey)=\(ShellEscaper.escape(command))"
             } else {
-                tmuxCommand = "\(tmux) -L \(Self.tmuxSocketName) -f \(quotedConfig)" +
-                    " new-session -A -s \(sessionName) -c \(quotedDir) -x 200 -y 50"
+                var relayArgs = ["new", "--shell", shell, "--cwd", workingDirectory]
+                for pair in envVars {
+                    relayArgs += ["--env", "\(pair.key)=\(pair.value)"]
+                }
+                relayCommand = relay + " " + relayArgs.joined(separator: " ")
             }
-            guard let cmdPtr = strdup(tmuxCommand) else { return }
+            guard let cmdPtr = strdup(relayCommand) else { return }
             surfaceCStringPointers.append(cmdPtr)
             config.command = UnsafePointer(cmdPtr)
             config.wait_after_command = false
@@ -229,7 +220,6 @@ final class GhosttyTerminalNSView: NSView {
     func tearDown() {
         isTornDown = true
         setHandCursor(false)
-        killTmuxSession()
         onOpenURL = nil
         onCmdClickFile = nil
         resolveCmdHoverFile = nil
@@ -276,72 +266,8 @@ final class GhosttyTerminalNSView: NSView {
         surfaceCStringPointers.removeAll()
     }
 
-    private static let tmuxSocketName = "muxy"
-    private static let tmuxSessionPrefix = "muxy-"
-    nonisolated(unsafe) private static var cachedTmuxBinary: String?
-    private var cachedTmuxSessionName: String?
-
-    private static func findTmuxBinary() -> String? {
-        if let cached = cachedTmuxBinary, FileManager.default.isExecutableFile(atPath: cached) {
-            return cached
-        }
-        cachedTmuxBinary = nil
-        let candidates = [
-            "/opt/homebrew/bin/tmux",
-            "/usr/local/bin/tmux",
-            "/opt/local/bin/tmux",
-            "/usr/bin/tmux",
-        ]
-        let found = candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
-        if let found { cachedTmuxBinary = found }
-        return found
-    }
-
-    static func tmuxAvailable() -> Bool {
-        findTmuxBinary() != nil
-    }
-
-    static func surfaceEvictionEnabled() -> Bool {
-        findTmuxBinary() != nil &&
-            UserDefaults.standard.bool(forKey: GeneralSettingsKeys.lowMemoryMode)
-    }
-
-    private static func ensureTmuxConfig() -> String {
-        let dir = MuxyFileStorage.appSupportDirectory()
-        let path = dir.appendingPathComponent("tmux.conf").path
-        let config = """
-        set -g status off
-        set -g escape-time 0
-        set -g history-limit 50000
-        set -g mouse on
-        set -g default-terminal "xterm-256color"
-        set -g aggressive-resize on
-        """
-        try? config.write(toFile: path, atomically: true, encoding: .utf8)
-        return path
-    }
-
-    private func tmuxSessionName() -> String? {
-        if let cached = cachedTmuxSessionName { return cached }
-        guard let paneID = TerminalViewRegistry.shared.paneID(for: self) else { return nil }
-        let name = "\(Self.tmuxSessionPrefix)\(paneID.uuidString.prefix(8))"
-        cachedTmuxSessionName = name
-        return name
-    }
-
-    private func killTmuxSession() {
-        guard let tmux = Self.findTmuxBinary(),
-              let name = cachedTmuxSessionName ?? tmuxSessionName()
-        else { return }
-        let binary = tmux
-        let socket = Self.tmuxSocketName
-        DispatchQueue.global(qos: .background).async {
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: binary)
-            process.arguments = ["-L", socket, "kill-session", "-t", name]
-            try? process.run()
-            process.waitUntilExit()
-        }
+    private static func findRelayBinary() -> String? {
+        Bundle.main.path(forAuxiliaryExecutable: "muxy-relay")
     }
 
     nonisolated(unsafe) private var screenChangeObserver: NSObjectProtocol?
@@ -461,17 +387,7 @@ final class GhosttyTerminalNSView: NSView {
             ghostty_surface_set_display_id(surface, displayID)
         }
 
-        if let paneID = TerminalViewRegistry.shared.paneID(for: self),
-           TerminalViewRegistry.shared.isOwnedByRemote(paneID)
-        {
-            return
-        }
-
         ghostty_surface_set_size(surface, backingSize.width, backingSize.height)
-    }
-
-    func remoteOwnershipDidChange() {
-        updateMetalLayerSize(deferred: false)
     }
 
     func materializeHeadless() {
