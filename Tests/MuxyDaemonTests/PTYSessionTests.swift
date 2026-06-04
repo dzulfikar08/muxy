@@ -2,14 +2,14 @@ import Foundation
 import Testing
 @testable import MuxyDaemon
 
-@Suite("PTYSession")
+@Suite("PTYSession", .serialized)
 struct PTYSessionTests {
-    @Test("create session and read output via cat")
-    func testCreateSessionOutputsData() throws {
+    @Test("create session and read output")
+    func testCreateSessionOutputsData() async throws {
         let session = try PTYSession(
             id: UUID(),
-            shell: "/bin/cat",
-            args: [],
+            shell: "/bin/sleep",
+            args: ["5"],
             cwd: "/tmp",
             env: [:],
             cols: 80,
@@ -18,7 +18,12 @@ struct PTYSessionTests {
 
         defer { session.kill() }
 
-        try session.write(Data("hello from pty\n".utf8))
+        try await Task.sleep(nanoseconds: 200_000_000)
+
+        let readResult = try session.readOutput(maxBytes: 4096, timeoutMs: 200)
+        #expect(readResult.isEmpty)
+
+        try session.write(Data("hello\n".utf8))
 
         var output = Data()
         let deadline = Date().addingTimeInterval(2.0)
@@ -28,18 +33,18 @@ struct PTYSessionTests {
                 output.append(chunk)
             }
             if let result = String(data: output, encoding: .utf8),
-               result.contains("hello from pty")
+               result.contains("hello")
             {
                 break
             }
         }
 
         let result = String(data: output, encoding: .utf8) ?? ""
-        #expect(result.contains("hello from pty"))
+        #expect(result.contains("hello"))
     }
 
     @Test("write input echoes via cat")
-    func testWriteInput() throws {
+    func testWriteInput() async throws {
         let session = try PTYSession(
             id: UUID(),
             shell: "/bin/cat",
@@ -52,6 +57,7 @@ struct PTYSessionTests {
 
         defer { session.kill() }
 
+        try await Task.sleep(nanoseconds: 200_000_000)
         try session.write(Data("test-input\n".utf8))
 
         var output = Data()
@@ -94,8 +100,8 @@ struct PTYSessionTests {
     func testSessionExits() async throws {
         let session = try PTYSession(
             id: UUID(),
-            shell: "/usr/bin/true",
-            args: [],
+            shell: "/bin/sleep",
+            args: ["0.1"],
             cwd: "/tmp",
             env: [:],
             cols: 80,
