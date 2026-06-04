@@ -108,8 +108,6 @@ struct SettingsView: View {
             RecordingSettingsView()
         case .notifications:
             NotificationSettingsView()
-        case .mobile:
-            MobileSettingsView()
         case .ai:
             AIAssistantSettingsView()
         case .json:

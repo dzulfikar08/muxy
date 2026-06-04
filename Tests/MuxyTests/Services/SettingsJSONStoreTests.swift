@@ -3,19 +3,21 @@ import Testing
 
 @testable import Muxy
 
+private let testPortKey = AIUsageSettingsStore.autoRefreshIntervalKey
+
 @Suite("SettingsJSONStore", .serialized)
 @MainActor
 struct SettingsJSONStoreTests {
     @Test
     func saveAppliesKnownSettingsAndPreservesUnknownKeys() throws {
-        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [MobileServerService.portKey])
+        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [testPortKey])
         defer { snapshot.restore() }
 
-        try SettingsJSONStore.saveUserSettingsText("{\"unknown.setting\":{\"nested\":true},\"\(MobileServerService.portKey)\":4242}")
+        try SettingsJSONStore.saveUserSettingsText("{\"unknown.setting\":{\"nested\":true},\"\(testPortKey)\":900}")
 
         let savedText = try String(contentsOf: SettingsJSONStore.userSettingsURL, encoding: .utf8)
 
-        #expect(UserDefaults.standard.integer(forKey: MobileServerService.portKey) == 4242)
+        #expect(UserDefaults.standard.integer(forKey: testPortKey) == 900)
         #expect(savedText.contains("\"unknown.setting\""))
         #expect(savedText.contains("  \"nested\" : true"))
         #expect(savedText.hasSuffix("\n"))
@@ -23,17 +25,17 @@ struct SettingsJSONStoreTests {
 
     @Test
     func invalidKnownValueDoesNotWriteOrApplySettings() throws {
-        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [MobileServerService.portKey])
+        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [testPortKey])
         defer { snapshot.restore() }
         let originalText = "{\"unchanged\":true}\n"
 
         try originalText.write(to: SettingsJSONStore.userSettingsURL, atomically: true, encoding: .utf8)
-        UserDefaults.standard.set(4242, forKey: MobileServerService.portKey)
+        UserDefaults.standard.set(900, forKey: testPortKey)
 
         #expect(throws: SettingsJSONError.self) {
             try SettingsJSONStore.saveUserSettingsText("""
             {
-              "\(MobileServerService.portKey)": 0
+              "\(testPortKey)": 0
             }
             """)
         }
@@ -41,7 +43,7 @@ struct SettingsJSONStoreTests {
         let savedText = try String(contentsOf: SettingsJSONStore.userSettingsURL, encoding: .utf8)
 
         #expect(savedText == originalText)
-        #expect(UserDefaults.standard.integer(forKey: MobileServerService.portKey) == 4242)
+        #expect(UserDefaults.standard.integer(forKey: testPortKey) == 900)
     }
 
     @Test
@@ -116,10 +118,10 @@ struct SettingsJSONStoreTests {
 
     @Test
     func omittedKnownSettingsRemainUnchanged() throws {
-        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [MobileServerService.portKey])
+        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [testPortKey])
         defer { snapshot.restore() }
 
-        UserDefaults.standard.set(4242, forKey: MobileServerService.portKey)
+        UserDefaults.standard.set(900, forKey: testPortKey)
 
         try SettingsJSONStore.saveUserSettingsText("""
         {
@@ -127,7 +129,7 @@ struct SettingsJSONStoreTests {
         }
         """)
 
-        #expect(UserDefaults.standard.integer(forKey: MobileServerService.portKey) == 4242)
+        #expect(UserDefaults.standard.integer(forKey: testPortKey) == 900)
     }
 
     @Test
@@ -182,21 +184,20 @@ struct SettingsJSONStoreTests {
         #expect(object.keys.contains("shortcuts.customCommands"))
         #expect(object.keys.contains("ai.providers"))
         #expect(object.keys.contains("aiUsage.providers"))
-        #expect(object.keys.contains("mobile.approvedDevices"))
     }
 
     @Test
     func syncWritesCurrentSettingsToUserJSON() throws {
-        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [MobileServerService.portKey])
+        let snapshot = SettingsJSONStoreSnapshot.capture(keys: [testPortKey])
         defer { snapshot.restore() }
 
-        UserDefaults.standard.set(4242, forKey: MobileServerService.portKey)
+        UserDefaults.standard.set(900, forKey: testPortKey)
         SettingsJSONStore.syncUserSettingsFileWithCurrentSettings()
 
         let data = try Data(contentsOf: SettingsJSONStore.userSettingsURL)
         let object = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
 
-        #expect(object[MobileServerService.portKey] as? Int == 4242)
+        #expect(object[testPortKey] as? Int == 900)
         #expect(object.keys.contains("shortcuts.app"))
     }
 }

@@ -92,15 +92,6 @@ struct MuxyApp: App {
                             clientContext: context
                         )
                     }
-                    MobileServerService.shared.configure { server in
-                        let delegate = RemoteServerDelegate(
-                            appState: appState,
-                            projectStore: projectStore,
-                            worktreeStore: worktreeStore
-                        )
-                        delegate.server = server
-                        return delegate
-                    }
                     appState.onProjectsEmptied = { [projectStore, worktreeStore] projectIDs in
                         for id in projectIDs {
                             guard let project = projectStore.projects.first(where: { $0.id == id }) else {
@@ -420,7 +411,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NotificationStore.shared.saveToDisk()
         NotificationSocketServer.shared.stop()
         MainActor.assumeIsolated {
-            MobileServerService.shared.stopForTermination()
             RichInputDraftStore.shared.flush()
             ExtensionStore.shared.stopAll()
         }

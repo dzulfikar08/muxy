@@ -38,26 +38,6 @@ struct AppStateTerminalSessionTests {
         #expect(!area.tabs.contains { $0.id == tabID })
     }
 
-    @Test("remote close terminal tab records closed tab through AppState persistence")
-    func remoteCloseTerminalTabRecordsClosedTab() {
-        let harness = makeHarness()
-        let area = harness.area
-        area.createTab()
-        let tabID = area.tabs[0].id
-        let delegate = RemoteServerDelegate(
-            appState: harness.appState,
-            projectStore: ProjectStore(persistence: ProjectPersistenceStub()),
-            worktreeStore: WorktreeStore(persistence: WorktreePersistenceStub(), listGitWorktrees: { _ in [] })
-        )
-
-        delegate.closeTab(projectID: harness.projectID, areaID: area.id, tabID: tabID)
-
-        #expect(harness.terminalSessions.savedWorkspaceRoots.isEmpty)
-        #expect(harness.terminalSessions.closedSnapshots.count == 1)
-        #expect(harness.terminalSessions.closedWorkspaceRoots.count == 1)
-        #expect(!area.tabs.contains { $0.id == tabID })
-    }
-
     @Test("ordinary terminal input tracking does not save terminal sessions")
     func ordinaryTerminalInputTrackingDoesNotSaveTerminalSessions() {
         let harness = makeHarness()

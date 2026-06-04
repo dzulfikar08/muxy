@@ -10,7 +10,6 @@ enum SettingsCategory: String, CaseIterable, Identifiable {
     case shortcuts
     case voice
     case notifications
-    case mobile
     case ai
     case json
 
@@ -26,7 +25,6 @@ enum SettingsCategory: String, CaseIterable, Identifiable {
         case .shortcuts: "Shortcuts"
         case .voice: "Voice"
         case .notifications: "Notifications"
-        case .mobile: "Mobile"
         case .ai: "AI"
         case .json: "JSON"
         }
@@ -42,7 +40,6 @@ enum SettingsCategory: String, CaseIterable, Identifiable {
         case .shortcuts: "keyboard"
         case .voice: "mic"
         case .notifications: "bell"
-        case .mobile: "iphone"
         case .ai: "sparkles"
         case .json: "curlybraces"
         }
@@ -466,37 +463,6 @@ enum SettingsCatalog {
             description: "Controls AI provider notification integrations.",
             category: .notifications,
             section: "AI Providers"
-        ),
-
-        SettingsCatalogItem(
-            key: MobileServerService.enabledKey,
-            title: "Allow Mobile Connections",
-            description: "Allows mobile devices to connect to this Mac.",
-            category: .mobile,
-            section: "Mobile",
-            defaultValue: false
-        ),
-        SettingsCatalogItem(
-            key: MobileServerService.portKey,
-            title: "Mobile Port",
-            description: "Controls the local server port for mobile pairing.",
-            category: .mobile,
-            section: "Mobile",
-            defaultValue: MobileServerService.defaultPort
-        ),
-        SettingsCatalogItem(
-            key: "mobile.pairing",
-            title: "Pair Mobile Device",
-            description: "Shows the QR code used to pair a mobile device.",
-            category: .mobile,
-            section: "Pair Mobile Device"
-        ),
-        SettingsCatalogItem(
-            key: "mobile.approvedDevices",
-            title: "Approved Devices",
-            description: "Manages mobile devices that can connect.",
-            category: .mobile,
-            section: "Approved Devices"
         ),
 
         SettingsCatalogItem(

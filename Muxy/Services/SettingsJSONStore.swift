@@ -103,7 +103,6 @@ enum SettingsJSONStore {
         dictionary["shortcuts.customCommands"] = commandShortcutsJSONObject(CommandShortcutConfiguration())
         dictionary["ai.providers"] = notificationProviderSettings(defaultValue: true)
         dictionary["aiUsage.providers"] = aiUsageProviderSettings(defaultValue: false)
-        dictionary["mobile.approvedDevices"] = []
         return dictionary
     }
 
@@ -119,7 +118,6 @@ enum SettingsJSONStore {
         ))
         dictionary["ai.providers"] = notificationProviderSettings()
         dictionary["aiUsage.providers"] = aiUsageProviderSettings()
-        dictionary["mobile.approvedDevices"] = codableJSONObject(ApprovedDevicesStore.shared.devices) ?? []
         return dictionary
     }
 
@@ -215,12 +213,6 @@ enum SettingsJSONStore {
     }
 
     private static func validateAllowedInt(_ value: Int, key: String) throws {
-        if key == MobileServerService.portKey {
-            guard let port = UInt16(exactly: value), MobileServerService.isValid(port: port) else {
-                throw SettingsJSONError.invalidValue(key)
-            }
-            return
-        }
         if key == AIUsageSettingsStore.autoRefreshIntervalKey {
             guard AIUsageAutoRefreshInterval(rawValue: value) != nil else { throw SettingsJSONError.invalidValue(key) }
         }
@@ -275,8 +267,7 @@ enum SettingsJSONStore {
         case "shortcuts.app",
              "shortcuts.customCommands",
              "ai.providers",
-             "aiUsage.providers",
-             "mobile.approvedDevices":
+             "aiUsage.providers":
             true
         default:
             false
@@ -296,8 +287,6 @@ enum SettingsJSONStore {
             guard let values = value as? [String: Any], values.values.allSatisfy({ $0 is Bool }) else {
                 throw SettingsJSONError.invalidValue(key)
             }
-        case "mobile.approvedDevices":
-            guard (codableValue(from: value) as [ApprovedDevice]?) != nil else { throw SettingsJSONError.invalidValue(key) }
         default:
             throw SettingsJSONError.invalidValue(key)
         }
@@ -349,9 +338,6 @@ enum SettingsJSONStore {
                 AIUsageProviderTrackingStore.setTracked(enabled, providerID: provider.id)
             }
             AIUsageService.shared.recomposeSnapshots()
-        case "mobile.approvedDevices":
-            guard let devices: [ApprovedDevice] = codableValue(from: value) else { return true }
-            ApprovedDevicesStore.shared.replaceDevices(devices)
         default:
             return false
         }

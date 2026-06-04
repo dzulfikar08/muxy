@@ -198,18 +198,11 @@ final class GhosttyTerminalNSView: NSView {
 
         syncSurfaceFocus()
 
-        if let paneID = TerminalViewRegistry.shared.paneID(for: self) {
-            RemoteTerminalStreamer.shared.attach(paneID: paneID, surface: surface)
-        }
-
         applyOcclusionState()
     }
 
     func destroySurface() {
         if let surface {
-            if let paneID = TerminalViewRegistry.shared.paneID(for: self) {
-                RemoteTerminalStreamer.shared.detach(paneID: paneID, surface: surface)
-            }
             ghostty_surface_free(surface)
         }
         surface = nil

@@ -25,19 +25,11 @@ let package = Package(
             path: "GhosttyKit",
             publicHeadersPath: "."
         ),
-        .target(
-            name: "MuxyServer",
-            dependencies: [
-                "MuxyShared",
-            ],
-            path: "MuxyServer"
-        ),
         .executableTarget(
             name: "Muxy",
             dependencies: [
                 "GhosttyKit",
                 "MuxyShared",
-                "MuxyServer",
                 .product(name: "Sparkle", package: "Sparkle"),
                 .product(name: "Yams", package: "Yams"),
                 .product(name: "Sentry", package: "sentry-cocoa"),
@@ -98,7 +90,6 @@ let package = Package(
             dependencies: [
                 "Muxy",
                 "MuxyShared",
-                "MuxyServer",
                 .product(name: "Yams", package: "Yams"),
             ],
             path: "Tests/MuxyTests",

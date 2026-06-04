@@ -14,7 +14,7 @@ struct SettingsCatalogTests {
     @Test
     func categoryMatchingUsesCatalogItems() {
         #expect(SettingsCatalog.categoryMatches(.editor, query: "line numbers"))
-        #expect(!SettingsCatalog.categoryMatches(.mobile, query: "line numbers"))
+        #expect(!SettingsCatalog.categoryMatches(.ai, query: "line numbers"))
     }
 
     @Test
