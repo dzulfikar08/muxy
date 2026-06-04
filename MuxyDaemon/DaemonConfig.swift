@@ -1,14 +1,14 @@
 import Foundation
 
-struct DaemonConfig: Sendable {
-    let unixSocketPath: String
-    let tcpPort: UInt16
-    let scrollbackSize: Int
-    let authStorePath: String
-    let sessionRegistryPath: String
-    let bonjourServiceType: String
+public struct DaemonConfig: Sendable {
+    public let unixSocketPath: String
+    public let tcpPort: UInt16
+    public let scrollbackSize: Int
+    public let authStorePath: String
+    public let sessionRegistryPath: String
+    public let bonjourServiceType: String
 
-    static let `default` = DaemonConfig(
+    public static let `default` = DaemonConfig(
         unixSocketPath: "\(NSHomeDirectory())/.muxy/daemon.sock",
         tcpPort: 4866,
         scrollbackSize: 10 * 1024,
@@ -17,11 +17,11 @@ struct DaemonConfig: Sendable {
         bonjourServiceType: "_muxyd._tcp"
     )
 
-    var daemonDirectory: String {
+    public var daemonDirectory: String {
         "\(NSHomeDirectory())/.muxy/daemon"
     }
 
-    func ensureDirectories() throws {
+    public func ensureDirectories() throws {
         try FileManager.default.createDirectory(
             atPath: daemonDirectory,
             withIntermediateDirectories: true

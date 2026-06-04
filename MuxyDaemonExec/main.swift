@@ -1,4 +1,5 @@
 import Foundation
+import MuxyDaemon
 import os
 
 let logger = Logger(subsystem: "app.muxy", category: "Daemon")
