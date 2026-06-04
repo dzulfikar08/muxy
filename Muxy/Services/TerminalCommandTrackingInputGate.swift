@@ -16,7 +16,7 @@ enum TerminalCommandTrackingInputGate {
         "sh",
         "screen",
         "tcsh",
-        "tmux",
+        "muxy-relay",
         "xonsh",
         "zellij",
         "zsh",

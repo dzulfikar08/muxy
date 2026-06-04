@@ -34,9 +34,9 @@ struct TerminalCommandTrackingInputGateTests {
         #expect(TerminalCommandTrackingInputGate.shouldRecordInput(context))
     }
 
-    @Test("Allows terminal multiplexers on primary screen")
-    func allowsTerminalMultiplexersOnPrimaryScreen() {
-        let context = TerminalCommandTrackingInputContext(altScreen: false, foregroundProcessName: "tmux")
+    @Test("Allows muxy-relay on primary screen")
+    func allowsMuxyRelayOnPrimaryScreen() {
+        let context = TerminalCommandTrackingInputContext(altScreen: false, foregroundProcessName: "muxy-relay")
         #expect(TerminalCommandTrackingInputGate.shouldRecordInput(context))
     }
 }

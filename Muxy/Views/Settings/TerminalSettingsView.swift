@@ -53,12 +53,9 @@ struct TerminalSettingsView: View {
             }
 
             let footer = """
-            Reduces RAM by evicting hidden terminal surfaces. \
-            Requires tmux.
-
+            Reduces RAM by evicting hidden terminal surfaces.
             • Shell state persists across workspace switches
-            • Smooth scrolling replaced with tmux-style scroll
-            • Text selection handled by tmux instead of native Ghostty
+            • Smooth scrolling is replaced with paged scroll
             • Existing terminals require reopening to apply
             """
             SettingsSection("Performance", footer: footer) {
