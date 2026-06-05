@@ -10,14 +10,18 @@ public final class DaemonServer: @unchecked Sendable {
     private let authenticator = DaemonAuthenticator()
     private var connectionManager: DaemonConnectionManager?
     private let queue = DispatchQueue(label: "app.muxy.server")
+    private let sessionStore: SessionStore?
+    private var sessionCreatedAt: [UUID: Date] = [:]
 
-    public init(config: DaemonConfig) {
+    public init(config: DaemonConfig, sessionStore: SessionStore? = nil) {
         self.config = config
+        self.sessionStore = sessionStore
     }
 
     public func start() throws {
         let manager = DaemonConnectionManager(config: config, server: self)
         self.connectionManager = manager
+        restoreSessions()
         try manager.start()
         logger.info("Daemon server started")
     }
@@ -125,7 +129,9 @@ public final class DaemonServer: @unchecked Sendable {
                 rows: 24
             )
             sessionRegistry.add(session)
+            sessionCreatedAt[sessionID] = Date()
             startReadingSession(session)
+            persistSessionRecords()
             sendToClient(client, message: .sessionCreated(sessionID: sessionID))
             logger.info("Session created: \(sessionID) shell=\(shell)")
         } catch {
@@ -179,6 +185,8 @@ public final class DaemonServer: @unchecked Sendable {
 
         session.kill()
         sessionRegistry.remove(sessionID)
+        sessionCreatedAt.removeValue(forKey: sessionID)
+        persistSessionRecords()
 
         broadcastSessionEvent(.sessionExited(sessionID: sessionID, exitCode: -1), to: sessionID)
         logger.info("Session killed: \(sessionID)")
@@ -250,5 +258,46 @@ public final class DaemonServer: @unchecked Sendable {
                 }
             }
         }
+    }
+
+    private func persistSessionRecords() {
+        guard let sessionStore else { return }
+        let records = sessionRegistry.allSessions().map { session in
+            SessionRecord(
+                id: session.id,
+                shell: session.shell,
+                cwd: session.cwd,
+                env: session.env,
+                cols: session.cols,
+                rows: session.rows,
+                childPID: session.childPID,
+                createdAt: sessionCreatedAt[session.id] ?? Date()
+            )
+        }
+        sessionStore.save(records)
+    }
+
+    private func restoreSessions() {
+        guard let sessionStore else { return }
+        let records = sessionStore.load()
+        guard !records.isEmpty else { return }
+
+        var aliveCount = 0
+        var deadCount = 0
+        for record in records {
+            if isProcessAlive(pid: record.childPID) {
+                aliveCount += 1
+                logger.info("Previous session \(record.id) (PID \(record.childPID)) still alive — not reattached")
+            } else {
+                deadCount += 1
+            }
+        }
+
+        logger.info("Session restore: \(aliveCount) alive, \(deadCount) dead (sessions from previous daemon run are lost)")
+        persistSessionRecords()
+    }
+
+    private func isProcessAlive(pid: pid_t) -> Bool {
+        kill(pid, 0) == 0
     }
 }

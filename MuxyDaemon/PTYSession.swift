@@ -25,7 +25,7 @@ final class PTYSession: @unchecked Sendable {
     private(set) var exitCode: Int32?
 
     private var masterFD: Int32
-    private var childPID: pid_t
+    let childPID: pid_t
 
     init(id: UUID, shell: String, args: [String] = [], cwd: String, env: [String: String], cols: UInt16, rows: UInt16) throws {
         self.id = id

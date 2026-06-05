@@ -36,7 +36,8 @@ do {
     Foundation.exit(1)
 }
 
-let server = DaemonServer(config: config)
+let store = SessionStore(filePath: config.sessionRegistryPath)
+let server = DaemonServer(config: config, sessionStore: store)
 do {
     try server.start()
 } catch {
