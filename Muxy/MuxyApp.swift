@@ -270,6 +270,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSWindow.allowsAutomaticWindowTabbing = false
         NSApp.setActivationPolicy(.regular)
         NSApp.activate()
+        DaemonLauncher.shared.launchIfNeeded()
         setAppIcon()
         _ = GhosttyService.shared
         GhosttyService.shared.applyInitialColorScheme()
