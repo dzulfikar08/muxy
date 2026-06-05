@@ -105,6 +105,14 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 cp "$SPM_BUILD_DIR/Muxy" "$APP_BUNDLE/Contents/MacOS/Muxy"
 install_name_tool -add_rpath @executable_path/../Frameworks "$APP_BUNDLE/Contents/MacOS/Muxy"
 
+echo "==> Building muxy-relay"
+swift build -c release --triple "$TRIPLE" --target MuxyRelay
+cp "$SPM_BUILD_DIR/MuxyRelay" "$APP_BUNDLE/Contents/MacOS/muxy-relay"
+
+echo "==> Building muxyd"
+swift build -c release --triple "$TRIPLE" --target MuxyDaemonExec
+cp "$SPM_BUILD_DIR/MuxyDaemonExec" "$APP_BUNDLE/Contents/MacOS/muxyd"
+
 echo "==> Generating dSYM"
 xcrun dsymutil "$APP_BUNDLE/Contents/MacOS/Muxy" -o "$DSYM_BUNDLE"
 
